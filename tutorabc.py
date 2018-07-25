@@ -24,6 +24,12 @@ phpsessid = ''
 location = ''
 
 
+def log(s):
+    f = open(file_path, "a")
+    f.write('%s\n' % s)
+    f.close()
+
+
 def get_sex():
     ran = random.randint(1, 2)
     print(str(ran))
@@ -98,6 +104,12 @@ def get_phone():
         raise RuntimeError("手机号获取不到")
 
 
+def get_random():
+    ran = random.randint(10, 255)
+    print(str(ran))
+    return str(ran)
+
+
 # 发送验证码
 def send_code():
     cookies = {
@@ -111,6 +123,7 @@ def send_code():
         'Referer': location,
         'Accept-Language': 'zh-cn',
         'X-Requested-With': 'XMLHttpRequest',
+        'Connection': 'close',
     }
 
     params = (
@@ -121,16 +134,24 @@ def send_code():
         ('random', random.random),
     )
 
-    print(params)
+    pro = ['https://123.163.27.70:8118', "https://1.196.161.222:9999", "https://183.159.93.232:18118"]
 
-    response = requests.get('https://p.viplex.cn/html/vipabc/vipabc.php', headers=headers, params=params,
-                            cookies=cookies)
+    print(params)
+    # , proxies = {"http": "http://171.39.77.187:8123"}
+    # proxy = {"https": 'https://115.210.178.155:8010'}
+    # print(proxy)
+    session = requests.session()
+    response = session.get('https://p.viplex.cn/html/vipabc/vipabc.php', headers=headers, params=params,
+                           cookies=cookies, proxies={"https": "https://114.215.95.188:3128"})
     print("发送验证码：" + response.text)
+    result = json.loads(response.text)['status']
+    if result == 2:
+        raise RuntimeError("验证码发送太频繁")
 
 
 def get_code():
     # 获取短信，注意线程挂起5秒钟，每次取短信最少间隔5秒
-    WAIT = 60  # 接受短信时长60s
+    WAIT = 30  # 接受短信时长60s
     url = 'http://api.fxhyd.cn/UserInterface.aspx?action=getsms&token=' + TOKEN + '&itemid=' + ITEMID + '&mobile=' + MOBILE + '&release=1'
     text1 = request.urlopen(request.Request(url=url, headers=header_dict)).read().decode(encoding='utf-8')
     TIME1 = time.time()
@@ -212,4 +233,14 @@ def deal():
 
 
 if __name__ == '__main__':
-    deal()
+    index = 0
+    global file_path
+    file_path = '%s.txt' % time.strftime("%Y%m%d")
+    while index < 10:
+        print(index)
+        try:
+            deal()
+            index += 1
+            log(MOBILE)
+        except RuntimeError as e:
+            print(e)

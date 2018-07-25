@@ -52,4 +52,7 @@ def get_sex():
 
 
 if __name__ == '__main__':
-    print(genBthy(20))
+    # print(genBthy(20))
+    pro = ['123.163.27.70:8118', "123.180.68.152:8010", "1.196.161.222:9999", "183.159.93.232:18118"]
+    proxy = {"https": "https://" + random.choice(pro)}
+    print(str(proxy))
