@@ -22,6 +22,7 @@ code = ''  # 验证码
 __tkpm__ = ''
 phpsessid = ''
 location = ''
+server = 'http://180.119.53.85:26189'
 
 
 def log(s):
@@ -110,48 +111,9 @@ def get_random():
     return str(ran)
 
 
-# 发送验证码
-def send_code():
-    cookies = {
-        'PHPSESSID': phpsessid,
-    }
-
-    headers = {
-        'Host': 'p.viplex.cn',
-        'Accept': 'application/json, text/javascript, */*; q=0.01',
-        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15F79 MicroMessenger/6.7.1 NetType/WIFI Language/zh_CN',
-        'Referer': location,
-        'Accept-Language': 'zh-cn',
-        'X-Requested-With': 'XMLHttpRequest',
-        'Connection': 'close',
-    }
-
-    params = (
-        ('do', 'sendcode'),
-        ('mobile', MOBILE),
-        ('token', token),
-        ('tsid', tsid),
-        ('random', random.random),
-    )
-
-    pro = ['https://123.163.27.70:8118', "https://1.196.161.222:9999", "https://183.159.93.232:18118"]
-
-    print(params)
-    # , proxies = {"http": "http://171.39.77.187:8123"}
-    # proxy = {"https": 'https://115.210.178.155:8010'}
-    # print(proxy)
-    session = requests.session()
-    response = session.get('https://p.viplex.cn/html/vipabc/vipabc.php', headers=headers, params=params,
-                           cookies=cookies, proxies={"https": "https://114.215.95.188:3128"})
-    print("发送验证码：" + response.text)
-    result = json.loads(response.text)['status']
-    if result == 2:
-        raise RuntimeError("验证码发送太频繁")
-
-
 def get_code():
     # 获取短信，注意线程挂起5秒钟，每次取短信最少间隔5秒
-    WAIT = 30  # 接受短信时长60s
+    WAIT = 60  # 接受短信时长60s
     url = 'http://api.fxhyd.cn/UserInterface.aspx?action=getsms&token=' + TOKEN + '&itemid=' + ITEMID + '&mobile=' + MOBILE + '&release=1'
     text1 = request.urlopen(request.Request(url=url, headers=header_dict)).read().decode(encoding='utf-8')
     TIME1 = time.time()
@@ -178,6 +140,11 @@ def get_code():
     RELEASE = request.urlopen(request.Request(url=url, headers=header_dict)).read().decode(encoding='utf-8')
     if RELEASE == 'success':
         print('号码成功释放')
+    # # 拉黑号码
+    url = 'http://api.fxhyd.cn/UserInterface.aspx?action=addignore&token=' + TOKEN + '&itemid=' + ITEMID + '&mobile=' + MOBILE
+    BLACK = request.urlopen(request.Request(url=url, headers=header_dict)).read().decode(encoding='utf-8')
+    if BLACK == 'success':
+        print('号码拉黑成功')
 
     # 提取短信内容中的数字验证码
     pat = "[0-9]+"
@@ -232,15 +199,88 @@ def deal():
     login()
 
 
+def get_proxy():
+    session = requests.session()
+    proxy = {
+        'http': 'http://101.236.22.141:8866',
+        'https': 'http://101.236.22.141:8866',
+    }
+
+    response = session.get(
+        "http://47.106.180.108:8081/Index-generate_api_url.html?packid=7&fa=5&qty=1&port=1&format=txt&ss=1&css=&pro=&city=",
+        proxies=proxy)
+    result = response.text
+    print(result)
+    return result
+
+
+# 发送验证码
+def send_code():
+    cookies = {
+        'PHPSESSID': phpsessid,
+    }
+
+    headers = {
+
+    }
+
+    params = (
+        ('do', 'sendcode'),
+        ('mobile', MOBILE),
+        ('token', token),
+        ('tsid', tsid),
+        ('random', random.random),
+    )
+
+    pro = ["http://101.236.22.141:8866", "http://222.188.180.238:31717", "http://219.156.162.113:33983"]
+
+    # print(params)
+    # server = random.choice(pro)
+    global server
+    proxy = {
+        'http': server,
+        'https': server
+    }
+
+    # proxy1 = {'http': 'http://117.93.120.134:33131',
+    #           'https': 'http://117.93.120.134:33131'}
+
+    print(proxy)
+    session = requests.session()
+    try:
+        response = session.get('https://p.viplex.cn/html/vipabc/vipabc.php', headers=headers, params=params,
+                               cookies=cookies, proxies=proxy)
+        print(response.text)
+    except:
+        # server = get_proxy()
+        raise RuntimeError("发送验证码失败")
+    print("发送验证码：" + response.text)
+    result = json.loads(response.text)['status']
+    if result == 2:
+        server = get_proxy()
+        raise RuntimeError("验证码发送太频繁")
+
+
 if __name__ == '__main__':
     index = 0
     global file_path
     file_path = '%s.txt' % time.strftime("%Y%m%d")
-    while index < 10:
+    while index < 4:
         print(index)
         try:
             deal()
             index += 1
             log(MOBILE)
         except RuntimeError as e:
+            # 释放号码
+            url = 'http://api.fxhyd.cn/UserInterface.aspx?action=release&token=' + TOKEN + '&itemid=' + ITEMID + '&mobile=' + MOBILE
+            RELEASE = request.urlopen(request.Request(url=url, headers=header_dict)).read().decode(encoding='utf-8')
+            if RELEASE == 'success':
+                print('号码成功释放')
+            # # 拉黑号码
+            url = 'http://api.fxhyd.cn/UserInterface.aspx?action=addignore&token=' + TOKEN + '&itemid=' + ITEMID + '&mobile=' + MOBILE
+            BLACK = request.urlopen(request.Request(url=url, headers=header_dict)).read().decode(encoding='utf-8')
+            if BLACK == 'success':
+                print('号码拉黑成功')
             print(e)
+        time.sleep(2)

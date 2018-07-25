@@ -51,8 +51,28 @@ def get_sex():
     return str(ran)
 
 
+def check_proxy():
+    url = 'http://ip.chinaz.com/getip.aspx'
+    proxy = {'http': 'http://27.46.21.140:8888',
+             'https': 'http://27.46.21.140:8888'}
+    head = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36',
+        'Connection': 'keep-alive'}
+    r = requests.get(url, headers=head, proxies=proxy, timeout=10)
+    print(r.text)
+
+
+def get_proxy():
+    session = requests.session()
+    response = session.get(
+        "http://47.106.180.108:8081/Index-generate_api_url.html?packid=7&fa=5&qty=1&port=1&format=txt&ss=1&css=&pro=&city=")
+    result = response.text
+    print(result)
+
+
 if __name__ == '__main__':
     # print(genBthy(20))
-    pro = ['123.163.27.70:8118', "123.180.68.152:8010", "1.196.161.222:9999", "183.159.93.232:18118"]
-    proxy = {"https": "https://" + random.choice(pro)}
-    print(str(proxy))
+    # pro = ['123.163.27.70:8118', "123.180.68.152:8010", "1.196.161.222:9999", "183.159.93.232:18118"]
+    # proxy = {"https": "https://" + random.choice(pro)}
+    # print(str(proxy))
+    get_proxy()

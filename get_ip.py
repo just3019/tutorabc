@@ -8,6 +8,7 @@ import random
 # 获取当前页面上的ip
 def get_ip_list(url, headers):
     web_data = requests.get(url, headers=headers)
+    print(web_data)
     soup = BeautifulSoup(web_data.text)
     ips = soup.find_all('tr')
     ip_list = []
