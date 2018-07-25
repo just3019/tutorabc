@@ -7,6 +7,7 @@ from urllib import parse, request
 import time
 import re
 from urllib.parse import quote
+import datetime
 
 import requests
 
@@ -18,14 +19,30 @@ ITEMID = '15887'  # 项目编号
 EXCLUDENO = ''  # 排除号段170_171
 MOBILE = ''  # 手机号
 code = ''  # 验证码
-__tkpm__ = 'LV5PQW1ESUZTR01eIV8bFGVGS0BSVwgFeA__'
+__tkpm__ = ''
+phpsessid = ''
+location = ''
+
+
+def get_sex():
+    ran = random.randint(1, 2)
+    print(str(ran))
+    return str(ran)
+
+
+def genBthy(n):
+    t = int(time.time())
+    tt = t - (datetime.timedelta(days=365) * n).total_seconds()
+    r = random.randrange(tt, t)
+    bthy = datetime.date.fromtimestamp(r)
+    return bthy.strftime(random.choice(["%Y-%m-%d"]))
 
 
 def qrcode():
     headers = {
         'Host': 't.mdingvip.com',
         'Upgrade-Insecure-Requests': '1',
-        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
         'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7,ja;q=0.6',
     }
@@ -34,10 +51,30 @@ def qrcode():
         ('__dmt', '3230862c6fd429f85a3a602b4a808f5b'),
         ('tcode', '1025'),
     )
+    session = requests.session()
+    resp = session.get('http://t.mdingvip.com/jump/', headers=headers, params=params, allow_redirects=False)
+    global location
+    location = resp.headers['Location']
+    print(location)
 
-    response = requests.get('http://t.mdingvip.com/jump/', headers=headers, params=params)
-    result = response.headers.get('location')
-    print(result)
+    response = session.get(location)
+    print(response.cookies["PHPSESSID"])
+    global phpsessid
+    phpsessid = response.cookies["PHPSESSID"]
+    result = response.text
+    global frm
+    global __tkpm__
+    frm = location[location.find("frm") + 4: location.find("frm") + 7]
+    __tkpm__ = location[location.find("__tkpm__") + 9: location.find("__tkpm__") + 45]
+    print(frm)
+    print(__tkpm__)
+
+    global token
+    global tsid
+    token = result[result.find("token") + 6: result.find("token") + 38]
+    tsid = result[result.find("tsid") + 5: result.find("tsid") + 15]
+    print("token:" + token)
+    print("tsid:" + tsid)
 
 
 def get_name():
@@ -61,50 +98,17 @@ def get_phone():
         raise RuntimeError("手机号获取不到")
 
 
-def get_html():
-    cookies = {
-        'Hm_lpvt_7704878d2e10a1307d233598184080cb': '1532438885',
-        'Hm_lvt_7704878d2e10a1307d233598184080cb': '1532438885',
-        'lxInfo': '533b8r%2BqsaowsKoOs2GP1LwIjB5HltiyAjE14fc%2FIqRg9gQveMSMByG%2FSZCltxvH8IT1ZViLQH8MUhE98AhpK1c9L3zSMCaVKnASU0aqVXOEabV9bBIhs1w4vNTipwvC4kFp32LwiNBpEHUSkM6rS%2FwbD%2FjXf30H680%2F3X5AdcaVTtk',
-        'PHPSESSID': 'jhpjvn5dtbshvofkiu99fp92h5',
-    }
-
-    headers = {
-        'Host': 'p.viplex.cn',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Upgrade-Insecure-Requests': '1',
-        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15F79 MicroMessenger/6.7.1 NetType/WIFI Language/zh_CN',
-        'Accept-Language': 'zh-cn',
-    }
-
-    params = (
-        ('frm', 'x01'),
-        ('__tkpm__', 'LV5PQW1ESUZTR01eIV8bFGVGS0BSVwgFeA__'),
-        ('tcode', '1025'),
-    )
-
-    response = requests.get('https://p.viplex.cn/html/vipabc/', headers=headers, params=params, cookies=cookies,
-                            verify=False)
-    global token
-    global tsid
-    result = response.text
-    token = result[result.find("token") + 6: result.find("token") + 38]
-    tsid = result[result.find("tsid") + 5: result.find("tsid") + 15]
-    print("token:" + token)
-    print("tsid:" + tsid)
-
-
 # 发送验证码
 def send_code():
     cookies = {
-        'PHPSESSID': 'jhpjvn5dtbshvofkiu99fp92h5',
+        'PHPSESSID': phpsessid,
     }
 
     headers = {
         'Host': 'p.viplex.cn',
         'Accept': 'application/json, text/javascript, */*; q=0.01',
         'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15F79 MicroMessenger/6.7.1 NetType/WIFI Language/zh_CN',
-        'Referer': 'https://p.viplex.cn/html/vipabc/?frm=x01&__tkpm__=' + __tkpm__ + '&tcode=1025',
+        'Referer': location,
         'Accept-Language': 'zh-cn',
         'X-Requested-With': 'XMLHttpRequest',
     }
@@ -171,7 +175,7 @@ def login():
     import requests
 
     cookies = {
-        'PHPSESSID': 'jhpjvn5dtbshvofkiu99fp92h5',
+        'PHPSESSID': phpsessid,
     }
 
     headers = {
@@ -182,15 +186,15 @@ def login():
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
         'Origin': 'https://p.viplex.cn',
         'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15F79 MicroMessenger/6.7.1 NetType/WIFI Language/zh_CN',
-        'Referer': 'https://p.viplex.cn/html/vipabc/?frm=x01&__tkpm__=' + __tkpm__ + '&tcode=1025',
+        'Referer': location,
     }
 
     global MOBILE
     global code
     data = 'frm=x01&__tkpm__=' + __tkpm__ + '&chanid=&need_bx=0&need_loan=0&name=' + quote(
-        get_name()) + '&sex=1&birthday=1992-02-01&mobile=' + MOBILE + '&checknum=' + code + '&addagree=1'
-    response = requests.post('https://p.viplex.cn/html/vipabc/', headers=headers, cookies=cookies, data=data,
-                             verify=False)
+        get_name()) + '&sex=' + get_sex() + '&birthday=' + genBthy(
+        30) + '&mobile=' + MOBILE + '&checknum=' + code + '&addagree=1'
+    response = requests.post('https://p.viplex.cn/html/vipabc/', headers=headers, cookies=cookies, data=data)
     print("登录信息：" + response.text)
     result = json.loads(response.text)
     if result['status'] != 0:
@@ -201,7 +205,7 @@ def login():
 
 def deal():
     get_phone()
-    get_html()
+    qrcode()
     send_code()
     get_code()
     login()

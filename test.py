@@ -2,8 +2,9 @@
 # python3.6
 import random
 import ssl
-import urllib3
-from time import mktime, asctime, localtime
+
+import datetime
+import time
 
 import requests
 
@@ -14,20 +15,6 @@ def get_name():
     X = random.choice(xing)
     M = "".join(random.choice(ming) for i in range(2))
     return X + M
-
-
-def get_birthday():
-    # mktime(tuple)讲时间元组转换为本地时间
-    # 日期元组说明：年，月，日，时，分，秒，周，儒历日，夏令时
-    date1 = (2016, 1, 1, 0, 0, 0, -1, -1, -1)
-    time1 = mktime(date1)
-    date2 = (2017, 1, 1, 0, 0, 0, -1, -1, -1)
-    time2 = mktime(date2)
-    # 在这一范围内生成随机数
-    random_time = random.uniform(time1, time2)  # uniform返回随机实数 time1 <= time < time2
-    # localtime(seconds)将秒数转换为日期元组
-    # asctime([tuple]) 将时间元组转换为字符串
-    print(asctime(localtime(random_time)))
 
 
 def qrcode():
@@ -50,9 +37,19 @@ def qrcode():
     print(result)
 
 
+def genBthy(n):
+    t = int(time.time())
+    tt = t - (datetime.timedelta(days=365) * n).total_seconds()
+    r = random.randrange(tt, t)
+    bthy = datetime.date.fromtimestamp(r)
+    return bthy.strftime(random.choice(["%Y-%m-%d"]))
+
+
+def get_sex():
+    ran = random.randint(1, 2)
+    print(str(ran))
+    return str(ran)
+
+
 if __name__ == '__main__':
-    # print(get_name())
-    # get_birthday()
-    # a = '中国'
-    # print(quote(a))
-    qrcode()
+    print(genBthy(20))
